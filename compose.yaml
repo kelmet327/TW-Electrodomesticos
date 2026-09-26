@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: bears_scourge
+      POSTGRES_USER: bears
+      POSTGRES_PASSWORD: bears_password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bears -d bears_scourge"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    volumes:
+      - bears_postgres_data:/var/lib/postgresql/data
+
+  web:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://bears:bears_password@db:5432/bears_scourge
+      SECRET_KEY: "cambia-esta-clave-en-compose-antes-de-publicar"
+      TAX_RATE: "13"
+    ports:
+      - "8080:8080"
+    command:
+      - sh
+      - -c
+      - >-
+        /opt/venv/bin/flask --app wsgi:app init-db &&
+        /opt/venv/bin/flask --app wsgi:app seed-db &&
+        apache2ctl -D FOREGROUND
+
+volumes:
+  bears_postgres_data:

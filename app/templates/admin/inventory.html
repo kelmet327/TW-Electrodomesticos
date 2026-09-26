@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import stock_badge, empty_state %}
+{% block content %}
+<div class="page-heading">
+    <div><span class="eyebrow">Control de existencias</span><h1>Inventario</h1><p>Consulta y ajusta las unidades disponibles de cada producto.</p></div>
+</div>
+
+<section class="metric-grid metric-grid-compact">
+    <article class="metric-card"><div><span>Unidades totales</span><strong>{{ resumen.unidades }}</strong><small>Productos activos</small></div></article>
+    <article class="metric-card"><div><span>Stock bajo</span><strong>{{ resumen.bajos }}</strong><small>Entre 1 y 10 unidades</small></div></article>
+    <article class="metric-card"><div><span>Agotados</span><strong>{{ resumen.agotados }}</strong><small>Sin unidades disponibles</small></div></article>
+</section>
+
+<section class="filter-panel">
+    <form class="filter-form" method="get">
+        <div class="field filter-search"><label for="q">Buscar producto</label><input id="q" name="q" value="{{ busqueda }}" placeholder="Nombre o marca"></div>
+        <div class="field"><label for="stock">Existencias</label><select id="stock" name="stock"><option value="todos" {{ 'selected' if stock_filter == 'todos' }}>Todos</option><option value="disponible" {{ 'selected' if stock_filter == 'disponible' }}>Más de 10</option><option value="bajo" {{ 'selected' if stock_filter == 'bajo' }}>Stock bajo</option><option value="agotado" {{ 'selected' if stock_filter == 'agotado' }}>Agotado</option></select></div>
+        <button class="button button-secondary" type="submit">Filtrar</button>{% if busqueda or stock_filter != 'todos' %}<a class="button button-ghost" href="{{ url_for('admin.inventory') }}">Limpiar</a>{% endif %}
+    </form>
+</section>
+
+<section class="panel">
+    {% if productos %}
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Producto</th><th>Categoría / Marca</th><th>Precio</th><th>Existencias</th><th>Estado</th><th class="actions-column">Ajuste manual</th></tr></thead>
+            <tbody>
+            {% for product in productos %}
+                <tr class="{{ 'row-muted' if not product.estado }}">
+                    <td><div class="table-product"><span class="table-thumb"><img src="{{ url_for('static', filename='img/product-placeholder.svg') }}" alt=""></span><span><strong>{{ product.nombre }}</strong><small>{{ product.modelo or 'Sin modelo' }}</small></span></div></td>
+                    <td><span class="stacked-cell"><strong>{{ product.categoria }}</strong><small>{{ product.marca }}</small></span></td>
+                    <td><strong>{{ format_money(product.precio) }}</strong></td>
+                    <td><span class="stock-number stock-number-{{ 'danger' if product.stock == 0 else 'warning' if product.stock <= 10 else 'normal' }}">{{ product.stock }}</span> {{ stock_badge(product.stock) }}</td>
+                    <td>{{ 'Activo' if product.estado else 'Inactivo' }}</td>
+                    <td>
+                        <details class="inline-adjust">
+                            <summary class="button button-secondary button-small">Ajustar</summary>
+                            <form method="post" action="{{ url_for('admin.inventory_adjust', product_id=product.id_producto) }}" class="adjust-form">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <select name="accion" aria-label="Tipo de ajuste"><option value="entrada">Entrada</option><option value="salida">Salida</option><option value="establecer">Establecer</option></select>
+                                <input name="cantidad" type="number" min="0" step="1" value="1" required aria-label="Cantidad">
+                                <input name="motivo" maxlength="200" placeholder="Motivo (opcional)" aria-label="Motivo">
+                                <button class="button button-primary button-small" type="submit">Aplicar</button>
+                            </form>
+                        </details>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}{{ empty_state('No hay coincidencias', 'Prueba cambiando los filtros de inventario.') }}{% endif %}
+</section>
+{% endblock %}

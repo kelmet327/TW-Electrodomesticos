@@ -1,0 +1,42 @@
+{% macro status_badge(estado) -%}
+    {% set normalized = estado|lower|replace('_', ' ') %}
+    <span class="badge status-{{ normalized|replace(' ', '-') }}">{{ normalized|capitalize }}</span>
+{%- endmacro %}
+
+{% macro stock_badge(stock) -%}
+    {% if stock == 0 %}
+        <span class="badge status-anulada">Agotado</span>
+    {% elif stock <= 10 %}
+        <span class="badge status-pendiente">Stock bajo</span>
+    {% else %}
+        <span class="badge status-completada">Disponible</span>
+    {% endif %}
+{%- endmacro %}
+
+{% macro pagination(page, total_pages, endpoint, args={}) -%}
+    {% if total_pages > 1 %}
+        <nav class="pagination" aria-label="Paginación">
+            {% set query = dict(request.args) %}
+            {% if page > 1 %}
+                <a class="button button-secondary button-small" href="{{ url_for(endpoint, **dict(query, pagina=page-1)) }}">Anterior</a>
+            {% else %}
+                <span class="button button-secondary button-small disabled">Anterior</span>
+            {% endif %}
+            <span>Página {{ page }} de {{ total_pages }}</span>
+            {% if page < total_pages %}
+                <a class="button button-secondary button-small" href="{{ url_for(endpoint, **dict(query, pagina=page+1)) }}">Siguiente</a>
+            {% else %}
+                <span class="button button-secondary button-small disabled">Siguiente</span>
+            {% endif %}
+        </nav>
+    {% endif %}
+{%- endmacro %}
+
+{% macro empty_state(title, message, action_label='', action_url='') -%}
+    <div class="empty-state">
+        <span class="empty-icon" aria-hidden="true">◇</span>
+        <h3>{{ title }}</h3>
+        <p>{{ message }}</p>
+        {% if action_url %}<a class="button button-primary" href="{{ action_url }}">{{ action_label }}</a>{% endif %}
+    </div>
+{%- endmacro %}

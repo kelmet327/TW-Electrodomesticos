@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import status_badge, stock_badge, empty_state %}
+{% block content %}
+<div class="page-heading">
+    <div><span class="eyebrow">Resumen de hoy</span><h1>Hola, {{ g.user['nombre'] }}.</h1><p>Este es el estado actual de Bear's Scourge.</p></div>
+    <a class="button button-primary" href="{{ url_for('sales.create') }}"><span>＋</span> Registrar venta</a>
+</div>
+
+<section class="metric-grid">
+    <article class="metric-card metric-accent"><div class="metric-icon">Bs</div><div><span>Ventas de hoy</span><strong>{{ daily.ventas }}</strong><small>{{ format_money(daily.ingresos) }} facturados</small></div></article>
+    <article class="metric-card"><div class="metric-icon metric-icon-blue">◇</div><div><span>Productos activos</span><strong>{{ inventory.productos }}</strong><small>{{ inventory.stock_bajo }} con stock bajo</small></div></article>
+    <article class="metric-card"><div class="metric-icon metric-icon-orange">!</div><div><span>Stock bajo</span><strong>{{ inventory.stock_bajo }}</strong><small>Unidades por revisar</small></div></article>
+    <article class="metric-card"><div class="metric-icon metric-icon-green">✓</div><div><span>Agotados</span><strong>{{ inventory.agotados }}</strong><small>Productos sin unidades</small></div></article>
+</section>
+
+<div class="dashboard-grid">
+    <section class="panel panel-wide">
+        <div class="panel-header"><div><h2>Ventas recientes</h2><p>Últimas operaciones registradas</p></div><a href="{{ url_for('sales.index') }}">Ver todas →</a></div>
+        {% if recent_sales %}
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Venta</th><th>Fecha</th><th>Vendedor</th><th>Unidades</th><th>Total</th><th>Estado</th><th></th></tr></thead>
+                <tbody>
+                {% for sale in recent_sales %}
+                    <tr>
+                        <td><strong class="sale-number">N.° {{ sale.id_venta }}</strong></td>
+                        <td>{{ format_date(sale.fecha_venta, true) }}</td>
+                        <td>{{ sale.vendedor }}</td>
+                        <td>{{ sale.unidades }}</td>
+                        <td><strong>{{ format_money(sale.total) }}</strong></td>
+                        <td>{{ status_badge(sale.estado) }}</td>
+                        <td><a class="table-action" href="{{ url_for('sales.detail', sale_id=sale.id_venta) }}" aria-label="Ver venta">→</a></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}{{ empty_state('Aún no hay ventas', 'Registra la primera venta del día para verla aquí.', 'Nueva venta', url_for('sales.create')) }}{% endif %}
+    </section>
+
+    <section class="panel">
+        <div class="panel-header"><div><h2>Alertas de inventario</h2><p>Stock igual o menor a 10</p></div><a href="{{ url_for('admin.inventory', stock='bajo') }}">Ver inventario →</a></div>
+        {% if low_stock %}
+        <div class="stock-list">
+            {% for product in low_stock %}
+            <a href="{{ url_for('admin.product_edit', product_id=product.id_producto) }}" class="stock-row">
+                <span class="stock-indicator {{ 'danger' if product.stock == 0 }}"></span>
+                <span class="stock-copy"><strong>{{ product.nombre }}</strong><small>{{ product.marca }}</small></span>
+                <strong class="stock-number">{{ product.stock }}</strong>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}{{ empty_state('Inventario saludable', 'No hay productos con stock bajo.') }}{% endif %}
+    </section>
+
+    <section class="panel panel-full">
+        <div class="panel-header"><div><h2>Productos más vendidos</h2><p>Movimiento de los últimos 30 días</p></div><a href="{{ url_for('reports.index') }}">Abrir reportes →</a></div>
+        {% if top_products %}
+        <div class="ranking-list">
+            {% for product in top_products %}
+            <div class="ranking-row"><span class="rank">{{ loop.index }}</span><div><strong>{{ product.nombre }}</strong><small>{{ product.unidades|int }} unidades</small></div><strong>{{ format_money(product.ingresos) }}</strong></div>
+            {% endfor %}
+        </div>
+        {% else %}{{ empty_state('Sin datos todavía', 'El ranking aparecerá luego de registrar ventas.') }}{% endif %}
+    </section>
+</div>
+{% endblock %}

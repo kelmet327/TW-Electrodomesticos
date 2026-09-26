@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="auth-section">
+    <div class="auth-visual">
+        <div class="auth-visual-content">
+            <span class="pill pill-light">Punto de venta</span>
+            <h1>Tu tienda, bajo control.</h1>
+            <p>Gestiona ventas, pagos e inventario de electrodomésticos desde un solo lugar.</p>
+            <div class="auth-benefits">
+                <span>✓ Stock actualizado</span><span>✓ Reportes en tiempo real</span><span>✓ Accesos por rol</span>
+            </div>
+        </div>
+    </div>
+    <div class="auth-panel">
+        <div class="auth-card">
+            <span class="eyebrow">Bienvenido de nuevo</span>
+            <h2>Inicia sesión</h2>
+            <p class="muted">Ingresa tus credenciales para acceder al sistema.</p>
+            <form class="form-stack" method="post" novalidate>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="field">
+                    <label for="correo">Correo electrónico</label>
+                    <input id="correo" name="correo" type="email" value="{{ request.args.get('correo', '') }}" autocomplete="email" required autofocus>
+                </div>
+                <div class="field">
+                    <div class="label-row"><label for="contrasena">Contraseña</label></div>
+                    <div class="password-field">
+                        <input id="contrasena" name="contrasena" type="password" autocomplete="current-password" required>
+                        <button type="button" data-toggle-password aria-label="Mostrar contraseña">Ver</button>
+                    </div>
+                </div>
+                <label class="check-row"><input type="checkbox" name="recordarme" value="on"><span>Mantener mi sesión iniciada</span></label>
+                <button class="button button-primary button-block" type="submit">Iniciar sesión</button>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}

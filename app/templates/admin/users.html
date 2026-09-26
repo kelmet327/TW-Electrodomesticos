@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import status_badge, empty_state %}
+{% block content %}
+<div class="page-heading">
+    <div><span class="eyebrow">Accesos y clientes</span><h1>Usuarios</h1><p>Gestiona vendedores, clientes y el estado de sus cuentas.</p></div>
+    <a class="button button-primary" href="{{ url_for('admin.user_create') }}">＋ Nuevo usuario</a>
+</div>
+
+<section class="metric-grid metric-grid-compact">
+    <article class="metric-card"><div><span>Vendedores activos</span><strong>{{ resumen.vendedores }}</strong><small>Personal del mostrador</small></div></article>
+    <article class="metric-card"><div><span>Clientes activos</span><strong>{{ resumen.clientes }}</strong><small>Cuentas de compra</small></div></article>
+    <article class="metric-card"><div><span>Cuentas inactivas</span><strong>{{ resumen.inactivos }}</strong><small>No pueden iniciar sesión</small></div></article>
+</section>
+
+<section class="filter-panel">
+    <form class="filter-form" method="get">
+        <div class="field filter-search"><label for="q">Buscar</label><input id="q" name="q" value="{{ busqueda }}" placeholder="Nombre, apellido o correo"></div>
+        <div class="field"><label for="rol">Rol</label><select id="rol" name="rol"><option value="">Todos</option><option value="vendedor" {{ 'selected' if rol == 'vendedor' }}>Vendedor</option><option value="cliente" {{ 'selected' if rol == 'cliente' }}>Cliente</option></select></div>
+        <div class="field"><label for="estado">Estado</label><select id="estado" name="estado"><option value="todos" {{ 'selected' if estado == 'todos' }}>Todos</option><option value="activos" {{ 'selected' if estado == 'activos' }}>Activos</option><option value="inactivos" {{ 'selected' if estado == 'inactivos' }}>Inactivos</option></select></div>
+        <button class="button button-secondary" type="submit">Filtrar</button>{% if busqueda or rol or estado != 'todos' %}<a class="button button-ghost" href="{{ url_for('admin.users') }}">Limpiar</a>{% endif %}
+    </form>
+</section>
+
+<section class="panel">
+    {% if usuarios %}
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Usuario</th><th>Contacto</th><th>Ciudad</th><th>Rol</th><th>Ventas</th><th>Estado</th><th class="actions-column">Acciones</th></tr></thead>
+            <tbody>
+            {% for user in usuarios %}
+                <tr class="{{ 'row-muted' if not user.estado }}">
+                    <td><div class="user-cell"><span class="avatar avatar-soft">{{ (user.nombre[0] ~ user.apellido[0])|upper }}</span><span><strong>{{ full_name(user) }}</strong><small>Desde {{ format_date(user.fecha_registro) }}</small></span></div></td>
+                    <td><span class="stacked-cell"><strong>{{ user.correo }}</strong><small>{{ user.telefono or 'Sin teléfono' }}</small></span></td>
+                    <td>{{ user.ciudad or '—' }}</td>
+                    <td><span class="badge role-{{ user.rol }}">{{ user.rol|capitalize }}</span></td>
+                    <td>{{ user.ventas_count }}</td>
+                    <td>{{ status_badge('activo' if user.estado else 'inactivo') }}</td>
+                    <td><div class="row-actions"><a class="icon-button" href="{{ url_for('admin.user_edit', user_id=user.id_usuario) }}" title="Editar">✎</a>{% if user.id_usuario != g.user.id %}<form method="post" action="{{ url_for('admin.user_toggle', user_id=user.id_usuario) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="icon-button" type="submit" title="Cambiar estado">{{ '⊖' if user.estado else '⊕' }}</button></form>{% endif %}</div></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}{{ empty_state('No hay usuarios', 'Cambia los filtros o crea una cuenta nueva.', 'Crear usuario', url_for('admin.user_create')) }}{% endif %}
+</section>
+{% endblock %}

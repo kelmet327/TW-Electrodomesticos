@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="error-page">
+    <span class="error-code">{{ code }}</span>
+    <h1>{{ title }}</h1>
+    <p>{{ message }}</p>
+    <div class="button-row">
+        <a class="button button-primary" href="{{ url_for('main.home') }}">Ir al inicio</a>
+        <button class="button button-secondary" type="button" onclick="history.back()">Volver</button>
+    </div>
+</section>
+{% endblock %}

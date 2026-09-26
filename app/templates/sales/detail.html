@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import status_badge %}
+{% block content %}
+<div class="page-heading no-print">
+    <div><a class="back-link" href="{{ url_for('sales.index') }}">← Volver a ventas</a><h1>Venta N.° {{ venta.id_venta }}</h1><p>Detalle de la operación, pago y productos entregados.</p></div>
+    <div class="button-row"><button class="button button-secondary" type="button" onclick="window.print()">Imprimir</button>{% if venta.estado != 'anulada' %}<form method="post" action="{{ url_for('sales.cancel', sale_id=venta.id_venta) }}" data-confirm="¿Anular esta venta? Se reembolsará el pago y las unidades volverán al inventario."><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button button-danger" type="submit">Anular venta</button></form>{% endif %}</div>
+</div>
+
+<div class="invoice-layout">
+    <article class="invoice panel">
+        <header class="invoice-header">
+            <div class="invoice-brand"><span class="brand-mark">BS</span><div><h2>Bear's Scourge</h2><p>Electrodomésticos y tecnología para el hogar</p></div></div>
+            <div class="invoice-number"><span>Comprobante</span><strong>N.° {{ venta.id_venta }}</strong>{{ status_badge(venta.estado) }}</div>
+        </header>
+        <div class="invoice-meta">
+            <div><small>Fecha de venta</small><strong>{{ format_date(venta.fecha_venta, true) }}</strong></div>
+            <div><small>Vendedor</small><strong>{{ venta.vendedor }}</strong><span>{{ venta.vendedor_correo }}</span></div>
+            <div><small>Cliente</small><strong>{{ venta.cliente or 'Cliente de mostrador' }}</strong><span>{{ venta.cliente_correo or 'Compra sin identificación' }}</span></div>
+        </div>
+        {% if venta.direccion_entrega %}<div class="delivery-note"><strong>Dirección de entrega</strong><span>{{ venta.direccion_entrega }}</span></div>{% endif %}
+        <div class="invoice-table-wrap">
+            <table class="invoice-table">
+                <thead><tr><th>#</th><th>Producto</th><th>Cantidad</th><th>Precio unitario</th><th>Subtotal</th></tr></thead>
+                <tbody>
+                {% for item in detalles %}
+                    <tr><td>{{ loop.index }}</td><td><strong>{{ item.nombre }}</strong><small>{{ item.marca }} · {{ item.modelo or 'Sin modelo' }}</small></td><td>{{ item.cantidad }}</td><td>{{ format_money(item.precio_unitario) }}</td><td><strong>{{ format_money(item.subtotal) }}</strong></td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="invoice-bottom">
+            <div class="payment-card"><small>Método de pago</small><strong>{{ payment_methods.get(venta.metodo, venta.metodo or 'Sin pago') }}</strong>{% if venta.referencia %}<span>Referencia: {{ venta.referencia }}</span>{% endif %}<span>Estado del pago: {{ payment_states.get(venta.pago_estado, venta.pago_estado or '—') }}</span></div>
+            <div class="invoice-totals"><div><span>Subtotal</span><strong>{{ format_money(venta.subtotal) }}</strong></div><div><span>IVA</span><strong>{{ format_money(venta.impuesto) }}</strong></div><div class="grand-total"><span>Total</span><strong>{{ format_money(venta.total) }}</strong></div></div>
+        </div>
+        <footer class="invoice-footer"><p>Gracias por su compra. Conserve este comprobante para cualquier consulta.</p><span>Bear's Scourge · Cochabamba, Bolivia</span></footer>
+    </article>
+    <aside class="invoice-side no-print">
+        <section class="panel info-panel"><h3>Resumen</h3><div><span>Unidades</span><strong>{{ detalles|sum(attribute='cantidad') }}</strong></div><div><span>Productos distintos</span><strong>{{ detalles|length }}</strong></div><div><span>Fecha de pago</span><strong>{{ format_date(venta.fecha_pago, true) }}</strong></div></section>
+        {% if venta.estado == 'anulada' %}<div class="notice notice-danger"><strong>Venta anulada</strong><p>El pago figura como reembolsado y las unidades fueron reintegradas al inventario.</p></div>{% endif %}
+    </aside>
+</div>
+{% endblock %}

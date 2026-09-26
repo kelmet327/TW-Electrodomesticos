@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="hero">
+    <div class="hero-bg" aria-hidden="true"></div>
+    <div class="public-container hero-grid">
+        <div class="hero-copy">
+            <span class="pill">Electrodomésticos seleccionados</span>
+            <h1>Mejorá tu hogar con <em>tecnología</em> que funciona.</h1>
+            <p>Frigoríficos, hornos, lavadoras y climatización con garantía y atención personalizada.</p>
+            <div class="button-row">
+                <a class="button button-primary button-large" href="#catalogo">Explorar catálogo</a>
+            </div>
+            <div class="hero-trust"><span>✓ Atención especializada</span><span>✓ Pago seguro</span><span>✓ Garantía</span></div>
+        </div>
+        <div class="hero-visual" aria-hidden="true">
+            <div class="appliance appliance-fridge"><span></span><i></i><b></b></div>
+            <div class="appliance appliance-washer"><span></span><i></i></div>
+            <div class="hero-orbit orbit-one"></div><div class="hero-orbit orbit-two"></div>
+            <div class="hero-price"><small>Desde</small><strong>Bs. 999</strong></div>
+        </div>
+    </div>
+</section>
+
+<section class="category-strip">
+    <div class="public-container">
+        <span>Elegí por categoría</span>
+        <div class="category-links">
+            {% for category in categorias %}
+                <a href="{{ url_for('main.home', categoria=category.id_categoria) }}#catalogo">{{ category.nombre }}</a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="catalog-section" id="catalogo">
+    <div class="public-container">
+        <div class="section-heading split-heading">
+            <div><span class="eyebrow">Nuestro catálogo</span><h2>Productos para cada rincón</h2></div>
+            <form class="catalog-search" method="get" action="{{ url_for('main.home') }}#catalogo">
+                <input type="search" name="q" value="{{ busqueda }}" placeholder="Buscar producto o marca" aria-label="Buscar catálogo">
+                <input type="hidden" name="categoria" value="{{ categoria_seleccionada }}">
+                <button type="submit" aria-label="Buscar">⌕</button>
+            </form>
+        </div>
+        <div class="filter-chips">
+            <a class="chip {{ 'active' if not categoria_seleccionada }}" href="{{ url_for('main.home', q=busqueda) }}#catalogo">Todos</a>
+            {% for category in categorias %}
+                <a class="chip {{ 'active' if categoria_seleccionada == category.id_categoria|string }}" href="{{ url_for('main.home', q=busqueda, categoria=category.id_categoria) }}#catalogo">{{ category.nombre }}</a>
+            {% endfor %}
+        </div>
+        {% if productos %}
+            <div class="product-grid public-product-grid">
+                {% for product in productos %}
+                    <article class="product-card">
+                        <a class="product-image" href="#producto-{{ product.id_producto }}" aria-label="Ver {{ product.nombre }}">
+                            {% if product.imagen_url %}<img src="{{ product.imagen_url }}" alt="{{ product.nombre }}" loading="lazy">{% else %}<img src="{{ url_for('static', filename='img/product-placeholder.svg') }}" alt="Ilustración de {{ product.nombre }}" loading="lazy">{% endif %}
+                            {% if product.stock == 0 %}<span class="image-label">Agotado</span>{% elif product.stock <= 5 %}<span class="image-label image-label-warm">Últimas unidades</span>{% endif %}
+                        </a>
+                        <div class="product-body">
+                            <span class="product-meta">{{ product.marca }} · {{ product.categoria }}</span>
+                            <h3 id="producto-{{ product.id_producto }}">{{ product.nombre }}</h3>
+                            <p>{{ product.descripcion or 'Electrodoméstico para tu hogar.' }}</p>
+                            <div class="product-footer"><strong>{{ format_money(product.precio) }}</strong><small>{{ product.stock }} disponibles</small></div>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state public-empty"><span class="empty-icon">⌕</span><h3>No encontramos productos</h3><p>Prueba con otro término o elimina los filtros.</p><a class="button button-secondary" href="{{ url_for('main.home') }}">Ver todo</a></div>
+        {% endif %}
+    </div>
+</section>
+
+<section class="service-section">
+    <div class="public-container service-grid">
+        <article><span>01</span><h3>Catálogo claro</h3><p>Productos organizados por categoría y marca para encontrarlos rápido.</p></article>
+        <article><span>02</span><h3>Atención personalizada</h3><p>Nuestro equipo te acompaña antes y después de tu compra.</p></article>
+        <article><span>03</span><h3>Entrega confiable</h3><p>Coordinamos la entrega y conservamos todos los datos de tu pedido.</p></article>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-heading">
+    <div><a class="back-link" href="{{ url_for('admin.users') }}">← Volver a usuarios</a><h1>{{ 'Editar usuario' if usuario else 'Nuevo usuario' }}</h1><p>Define sus datos personales, rol y acceso al sistema.</p></div>
+</div>
+
+<form method="post" class="editor-layout" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <section class="panel form-panel editor-main">
+        <div class="panel-header"><div><h2>Datos de la cuenta</h2><p>La contraseña se almacena como un hash seguro</p></div></div>
+        <div class="form-grid">
+            <div class="field"><label for="nombre">Nombre *</label><input id="nombre" name="nombre" value="{{ usuario.nombre if usuario else '' }}" maxlength="60" required autofocus></div>
+            <div class="field"><label for="apellido">Apellido *</label><input id="apellido" name="apellido" value="{{ usuario.apellido if usuario else '' }}" maxlength="60" required></div>
+            <div class="field field-full"><label for="correo">Correo electrónico *</label><input id="correo" name="correo" type="email" value="{{ usuario.correo if usuario else '' }}" maxlength="120" required></div>
+            <div class="field"><label for="telefono">Teléfono</label><input id="telefono" name="telefono" value="{{ usuario.telefono or '' if usuario else '' }}" maxlength="20"></div>
+            <div class="field"><label for="ciudad">Ciudad</label><input id="ciudad" name="ciudad" value="{{ usuario.ciudad or '' if usuario else '' }}" maxlength="80"></div>
+            <div class="field field-full"><label for="direccion">Dirección</label><input id="direccion" name="direccion" value="{{ usuario.direccion or '' if usuario else '' }}" maxlength="200"></div>
+        </div>
+    </section>
+    <aside class="editor-side">
+        <section class="panel form-panel sticky-panel">
+            <h2>Acceso</h2>
+            <div class="field"><label for="rol">Rol *</label><select id="rol" name="rol" required><option value="">Seleccionar</option>{% for value, label in roles.items() %}<option value="{{ value }}" {{ 'selected' if usuario and usuario.rol == value }}>{{ label }}</option>{% endfor %}</select></div>
+            <div class="field"><label for="contrasena">Contraseña {{ '*' if not usuario }}</label><input id="contrasena" name="contrasena" type="password" minlength="8" autocomplete="new-password" {{ 'required' if not usuario }}><small>{{ 'Mínimo 8 caracteres.' if not usuario else 'Déjala vacía para conservarla.' }}</small></div>
+            <label class="switch-row"><input type="checkbox" name="estado" {{ 'checked' if not usuario or usuario.estado }}><span class="switch"></span><span><strong>Cuenta activa</strong><small>Permite iniciar sesión</small></span></label>
+            <div class="form-actions stacked-actions"><button class="button button-primary button-block" type="submit">{{ 'Guardar cambios' if usuario else 'Crear usuario' }}</button><a class="button button-secondary button-block" href="{{ url_for('admin.users') }}">Cancelar</a></div>
+        </section>
+    </aside>
+</form>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import status_badge, stock_badge, pagination, empty_state %}
+{% block content %}
+<div class="page-heading">
+    <div><span class="eyebrow">Catálogo</span><h1>Productos</h1><p>Administra precios, publicación y datos del inventario.</p></div>
+    <a class="button button-primary" href="{{ url_for('admin.product_create') }}">＋ Nuevo producto</a>
+</div>
+
+<section class="filter-panel">
+    <form class="filter-form" method="get">
+        <div class="field filter-search"><label for="q">Buscar</label><input id="q" name="q" value="{{ busqueda }}" placeholder="Nombre o modelo"></div>
+        <div class="field"><label for="categoria">Categoría</label><select id="categoria" name="categoria"><option value="">Todas</option>{% for item in categorias %}<option value="{{ item.id_categoria }}" {{ 'selected' if categoria == item.id_categoria|string }}>{{ item.nombre }}</option>{% endfor %}</select></div>
+        <div class="field"><label for="marca">Marca</label><select id="marca" name="marca"><option value="">Todas</option>{% for item in marcas %}<option value="{{ item.id_marca }}" {{ 'selected' if marca == item.id_marca|string }}>{{ item.nombre }}</option>{% endfor %}</select></div>
+        <div class="field"><label for="estado">Estado</label><select id="estado" name="estado"><option value="todos" {{ 'selected' if estado == 'todos' }}>Todos</option><option value="activos" {{ 'selected' if estado == 'activos' }}>Activos</option><option value="inactivos" {{ 'selected' if estado == 'inactivos' }}>Inactivos</option></select></div>
+        <button class="button button-secondary" type="submit">Filtrar</button>
+        {% if busqueda or categoria or marca or estado != 'todos' %}<a class="button button-ghost" href="{{ url_for('admin.products') }}">Limpiar</a>{% endif %}
+    </form>
+</section>
+
+<section class="panel">
+    <div class="panel-header"><div><h2>{{ total }} producto{{ 's' if total != 1 }}</h2><p>Resultados del catálogo</p></div></div>
+    {% if productos %}
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Producto</th><th>Categoría / Marca</th><th>Precio</th><th>Stock</th><th>Ventas</th><th>Estado</th><th class="actions-column">Acciones</th></tr></thead>
+            <tbody>
+            {% for product in productos %}
+                <tr class="{{ 'row-muted' if not product.estado }}">
+                    <td><div class="table-product"><span class="table-thumb">{% if product.imagen_url %}<img src="{{ product.imagen_url }}" alt="">{% else %}<img src="{{ url_for('static', filename='img/product-placeholder.svg') }}" alt="">{% endif %}</span><span><strong>{{ product.nombre }}</strong><small>{{ product.modelo or 'Sin modelo' }}</small></span></div></td>
+                    <td><span class="stacked-cell"><strong>{{ product.categoria }}</strong><small>{{ product.marca }}</small></span></td>
+                    <td><strong>{{ format_money(product.precio) }}</strong></td>
+                    <td><span class="stock-cell">{{ stock_badge(product.stock) }} <strong>{{ product.stock }}</strong></span></td>
+                    <td>{{ product.ventas_count }}</td>
+                    <td>{{ status_badge('activo' if product.estado else 'inactivo') }}</td>
+                    <td><div class="row-actions"><a class="icon-button" href="{{ url_for('admin.product_edit', product_id=product.id_producto) }}" title="Editar">✎</a><form method="post" action="{{ url_for('admin.product_toggle', product_id=product.id_producto) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="icon-button" type="submit" title="{{ 'Desactivar' if product.estado else 'Activar' }}">{{ '⊖' if product.estado else '⊕' }}</button></form></div></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {{ pagination(pagina, total_paginas, 'admin.products') }}
+    {% else %}{{ empty_state('No hay productos', 'Ajusta los filtros o crea el primer producto.', 'Crear producto', url_for('admin.product_create')) }}{% endif %}
+</section>
+{% endblock %}

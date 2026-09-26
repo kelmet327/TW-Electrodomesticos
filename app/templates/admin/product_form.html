@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-heading">
+    <div><a class="back-link" href="{{ url_for('admin.products') }}">← Volver a productos</a><h1>{{ 'Editar producto' if producto else 'Nuevo producto' }}</h1><p>{% if producto %}Actualiza la información del artículo.{% else %}Registra un nuevo artículo en el catálogo.{% endif %}</p></div>
+</div>
+
+<form method="post" class="editor-layout" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="editor-main">
+        <section class="panel form-panel">
+            <div class="panel-header"><div><h2>Información general</h2><p>Datos visibles en el catálogo</p></div></div>
+            <div class="form-grid">
+                <div class="field field-full"><label for="nombre">Nombre del producto *</label><input id="nombre" name="nombre" value="{{ producto.nombre if producto else '' }}" maxlength="150" required autofocus><small>Máximo 150 caracteres.</small></div>
+                <div class="field"><label for="modelo">Modelo</label><input id="modelo" name="modelo" value="{{ producto.modelo if producto else '' }}" maxlength="80" placeholder="Ej. RT38K"></div>
+                <div class="field"><label for="precio">Precio de venta (Bs.) *</label><input id="precio" name="precio" type="number" min="0" step="0.01" value="{{ producto.precio if producto else '' }}" required></div>
+                <div class="field field-full"><label for="descripcion">Descripción</label><textarea id="descripcion" name="descripcion" rows="5" maxlength="5000" placeholder="Características técnicas principales">{{ producto.descripcion if producto else '' }}</textarea></div>
+                <div class="field field-full"><label for="imagen_url">URL de imagen</label><input id="imagen_url" name="imagen_url" type="url" value="{{ producto.imagen_url or '' if producto else '' }}" maxlength="255" placeholder="https://... o /static/..."><small>Usa una URL http/https; si está vacía se mostrará una illustration.</small></div>
+            </div>
+        </section>
+
+        <section class="panel form-panel">
+            <div class="panel-header"><div><h2>Organización</h2><p>Clasificación del catálogo</p></div></div>
+            <div class="form-grid">
+                <div class="field"><label for="id_categoria">Categoría *</label><select id="id_categoria" name="id_categoria" required><option value="">Seleccionar categoría</option>{% for category in categorias %}<option value="{{ category.id_categoria }}" {{ 'selected' if producto and producto.id_categoria == category.id_categoria }}>{{ category.nombre }}{{ ' (inactiva)' if not category.estado }}</option>{% endfor %}</select></div>
+                <div class="field"><label for="id_marca">Marca *</label><select id="id_marca" name="id_marca" required><option value="">Seleccionar marca</option>{% for brand in marcas %}<option value="{{ brand.id_marca }}" {{ 'selected' if producto and producto.id_marca == brand.id_marca }}>{{ brand.nombre }}{{ ' (inactiva)' if not brand.estado }}</option>{% endfor %}</select></div>
+            </div>
+        </section>
+    </div>
+
+    <aside class="editor-side">
+        <section class="panel form-panel sticky-panel">
+            <h2>Publicación</h2>
+            <div class="field"><label for="stock">Stock inicial *</label><input id="stock" name="stock" type="number" min="0" step="1" value="{{ producto.stock if producto else 0 }}" required><small>Los ajustes posteriores se registran desde Inventario.</small></div>
+            <label class="switch-row"><input type="checkbox" name="estado" {{ 'checked' if not producto or producto.estado }}><span class="switch"></span><span><strong>Producto visible</strong><small>Disponible en el catálogo público</small></span></label>
+            <div class="form-actions stacked-actions"><button class="button button-primary button-block" type="submit">{{ 'Guardar cambios' if producto else 'Crear producto' }}</button><a class="button button-secondary button-block" href="{{ url_for('admin.products') }}">Cancelar</a></div>
+        </section>
+    </aside>
+</form>
+{% endblock %}

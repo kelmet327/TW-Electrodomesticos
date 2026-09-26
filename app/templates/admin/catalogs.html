@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import status_badge %}
+{% block content %}
+<div class="page-heading">
+    <div><span class="eyebrow">Taxonomía del catálogo</span><h1>Categorías y marcas</h1><p>Organiza los productos y controla cuáles se muestran en la tienda.</p></div>
+</div>
+
+<div class="two-column-panels">
+    <section class="panel">
+        <div class="panel-header"><div><h2>Categorías</h2><p>{{ categorias|length }} registros</p></div></div>
+        <form class="inline-create-form" method="post" action="{{ url_for('admin.category_create') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="field"><label for="cat-nombre">Nombre</label><input id="cat-nombre" name="nombre" maxlength="80" required></div>
+            <div class="field"><label for="cat-descripcion">Descripción</label><input id="cat-descripcion" name="descripcion" maxlength="255"></div>
+            <button class="button button-primary" type="submit">Agregar</button>
+        </form>
+        <div class="simple-list">
+            {% for category in categorias %}
+            <div class="simple-row {{ 'row-muted' if not category.estado }}">
+                <div><strong>{{ category.nombre }}</strong><small>{{ category.descripcion or 'Sin descripción' }} · {{ category.productos_count }} producto(s)</small></div>
+                <div class="row-actions"><span>{{ status_badge('activo' if category.estado else 'inactivo') }}</span><form method="post" action="{{ url_for('admin.category_toggle', category_id=category.id_categoria) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="icon-button" type="submit" title="Cambiar estado">{{ '⊖' if category.estado else '⊕' }}</button></form></div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header"><div><h2>Marcas</h2><p>{{ marcas|length }} registros</p></div></div>
+        <form class="inline-create-form" method="post" action="{{ url_for('admin.brand_create') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="field"><label for="marca-nombre">Nombre</label><input id="marca-nombre" name="nombre" maxlength="80" required></div>
+            <div class="field"><label for="pais-origen">País de origen</label><input id="pais-origen" name="pais_origen" maxlength="80"></div>
+            <button class="button button-primary" type="submit">Agregar</button>
+        </form>
+        <div class="simple-list">
+            {% for brand in marcas %}
+            <div class="simple-row {{ 'row-muted' if not brand.estado }}">
+                <div><strong>{{ brand.nombre }}</strong><small>{{ brand.pais_origen or 'Origen no indicado' }} · {{ brand.productos_count }} producto(s)</small></div>
+                <div class="row-actions"><span>{{ status_badge('activo' if brand.estado else 'inactivo') }}</span><form method="post" action="{{ url_for('admin.brand_toggle', brand_id=brand.id_marca) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="icon-button" type="submit" title="Cambiar estado">{{ '⊖' if brand.estado else '⊕' }}</button></form></div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+{% endblock %}

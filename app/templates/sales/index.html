@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import status_badge, pagination, empty_state %}
+{% block content %}
+<div class="page-heading">
+    <div><span class="eyebrow">Operaciones</span><h1>Ventas</h1><p>Consulta ventas, pagos y estados registrados en el mostrador.</p></div>
+    <a class="button button-primary" href="{{ url_for('sales.create') }}">＋ Nueva venta</a>
+</div>
+
+<section class="filter-panel">
+    <form class="filter-form filter-form-wide" method="get">
+        <div class="field filter-search"><label for="q">Buscar</label><input id="q" name="q" value="{{ busqueda }}" placeholder="N.° de venta o vendedor"></div>
+        <div class="field"><label for="estado">Estado</label><select id="estado" name="estado"><option value="">Todos</option>{% for value, label in sale_states.items() %}<option value="{{ value }}" {{ 'selected' if estado == value }}>{{ label }}</option>{% endfor %}</select></div>
+        <div class="field"><label for="desde">Desde</label><input id="desde" name="desde" type="date" value="{{ fecha_desde }}"></div>
+        <div class="field"><label for="hasta">Hasta</label><input id="hasta" name="hasta" type="date" value="{{ fecha_hasta }}"></div>
+        <button class="button button-secondary" type="submit">Filtrar</button>{% if busqueda or estado or fecha_desde or fecha_hasta %}<a class="button button-ghost" href="{{ url_for('sales.index') }}">Limpiar</a>{% endif %}
+    </form>
+</section>
+
+<section class="panel">
+    <div class="panel-header"><div><h2>{{ total }} venta{{ 's' if total != 1 }}</h2><p>Resultados encontrados</p></div></div>
+    {% if ventas %}
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Venta</th><th>Fecha</th><th>Cliente</th><th>Vendedor</th><th>Unidades</th><th>Pago</th><th>Total</th><th>Estado</th><th></th></tr></thead>
+            <tbody>
+            {% for sale in ventas %}
+                <tr class="{{ 'row-muted' if sale.estado == 'anulada' }}">
+                    <td><strong class="sale-number">N.° {{ sale.id_venta }}</strong></td>
+                    <td>{{ format_date(sale.fecha_venta, true) }}</td>
+                    <td>{{ sale.cliente }}</td>
+                    <td>{{ sale.vendedor }}</td>
+                    <td>{{ sale.unidades }}</td>
+                    <td>{{ payment_methods.get(sale.metodo_pago, sale.metodo_pago or '—') }}</td>
+                    <td><strong>{{ format_money(sale.total) }}</strong></td>
+                    <td>{{ status_badge(sale.estado) }}</td>
+                    <td><a class="table-action" href="{{ url_for('sales.detail', sale_id=sale.id_venta) }}" aria-label="Ver detalle">→</a></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {{ pagination(pagina, total_paginas, 'sales.index') }}
+    {% else %}{{ empty_state('No hay ventas', 'No se encontraron operaciones con los filtros indicados.', 'Registrar venta', url_for('sales.create')) }}{% endif %}
+</section>
+{% endblock %}

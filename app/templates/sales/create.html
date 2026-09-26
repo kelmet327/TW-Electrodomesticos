@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-heading pos-heading">
+    <div><a class="back-link" href="{{ url_for('sales.index') }}">← Volver a ventas</a><h1>Punto de venta</h1><p>Selecciona los productos, confirma el cliente y registra el pago.</p></div>
+    <span class="connection-pill"><i></i> Inventario sincronizado</span>
+</div>
+
+<form method="post" id="pos-form" class="pos-layout" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <section class="pos-catalog panel">
+        <div class="pos-toolbar">
+            <div class="pos-search"><span aria-hidden="true">⌕</span><input id="pos-search" type="search" placeholder="Buscar por producto, modelo o marca" aria-label="Buscar producto"></div>
+            <select id="pos-category" aria-label="Filtrar categoría"><option value="">Todas las categorías</option>{% set seen_categories = [] %}{% for product in productos %}{% if product.categoria not in seen_categories %}{% set _ = seen_categories.append(product.categoria) %}<option value="{{ product.categoria }}">{{ product.categoria }}</option>{% endif %}{% endfor %}</select>
+        </div>
+        <div class="pos-section-heading"><div><h2>Productos</h2><p><span id="product-counter">0</span> artículos disponibles</p></div></div>
+        <div class="pos-product-list" id="pos-products">
+            {% for product in productos %}
+            <article class="pos-product" data-product-id="{{ product.id_producto }}" data-name="{{ (product.nombre ~ ' ' ~ (product.modelo or '') ~ ' ' ~ product.marca)|lower }}" data-category="{{ product.categoria }}">
+                <span class="pos-product-image"><img src="{{ product.imagen_url or url_for('static', filename='img/product-placeholder.svg') }}" alt=""></span>
+                <div class="pos-product-copy"><small>{{ product.marca }} · {{ product.categoria }}</small><strong>{{ product.nombre }}</strong><span>{{ product.modelo or 'Sin modelo' }}</span></div>
+                <div class="pos-product-price"><strong>{{ format_money(product.precio) }}</strong><small class="{{ 'text-danger' if product.stock == 0 }}">{{ product.stock }} disp.</small></div>
+                <button class="button {{ 'button-secondary' if product.stock == 0 else 'button-primary' }} add-product" type="button" data-id="{{ product.id_producto }}" {{ 'disabled' if product.stock == 0 }}>{{ 'Agotado' if product.stock == 0 else 'Agregar' }}</button>
+            </article>
+            {% endfor %}
+        </div>
+        <div class="pos-no-results" id="pos-no-results" hidden><strong>No se encontraron productos</strong><span>Prueba con otro nombre o categoría.</span></div>
+    </section>
+
+    <aside class="pos-checkout panel">
+        <div class="checkout-header"><div><span class="eyebrow">Venta actual</span><h2>Carrito</h2></div><button class="text-button" id="clear-cart" type="button" hidden>Limpiar</button></div>
+        <div class="cart-items" id="cart-items">
+            <div class="cart-empty" id="cart-empty"><span>＋</span><strong>El carrito está vacío</strong><p>Agrega productos desde el catálogo.</p></div>
+        </div>
+        <div class="checkout-totals">
+            <div><span>Subtotal</span><strong id="cart-subtotal">Bs. 0.00</strong></div>
+            <div><span>IVA <small id="tax-label"></small></span><strong id="cart-tax">Bs. 0.00</strong></div>
+            <div class="checkout-total"><span>Total</span><strong id="cart-total">Bs. 0.00</strong></div>
+        </div>
+        <div class="checkout-fields">
+            <div class="field"><label for="id_cliente">Cliente <small>(opcional)</small></label><select id="id_cliente" name="id_cliente"><option value="">Cliente de mostrador</option>{% for client in clientes %}<option value="{{ client.id_usuario }}" {{ 'selected' if form_data.get('id_cliente') == client.id_usuario|string }}>{{ client.apellido }}, {{ client.nombre }} · {{ client.correo }}</option>{% endfor %}</select></div>
+            <div class="field"><label for="metodo">Método de pago *</label><select id="metodo" name="metodo" required><option value="">Seleccionar</option>{% for value, label in payment_methods.items() %}<option value="{{ value }}" {{ 'selected' if form_data.get('metodo') == value }}>{{ label }}</option>{% endfor %}</select></div>
+            <div class="field" id="reference-field"><label for="referencia">Referencia</label><input id="referencia" name="referencia" value="{{ form_data.get('referencia', '') }}" maxlength="100" placeholder="N.° de operación o aprobación"></div>
+            <div class="field"><label for="direccion_entrega">Dirección de entrega <small>(opcional)</small></label><textarea id="direccion_entrega" name="direccion_entrega" rows="2" maxlength="200" placeholder="Dejar vacío para entrega en tienda">{{ form_data.get('direccion_entrega', '') }}</textarea></div>
+        </div>
+        <button class="button button-primary button-large button-block checkout-submit" id="checkout-submit" type="submit" disabled>Confirmar venta</button>
+        <p class="checkout-note">El total y el stock se vuelven a validar en el servidor antes de guardar.</p>
+    </aside>
+</form>
+<div id="pos-data" data-tax-rate="{{ tax_rate }}" hidden>
+    <script id="pos-products-json" type="application/json">{{ productos|tojson }}</script>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/pos.js') }}" defer></script>{% endblock %}

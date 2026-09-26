@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-heading">
+    <div><span class="eyebrow">Análisis de desempeño</span><h1>Reportes</h1><p>Indicadores de ventas, inventario y desempeño por período.</p></div>
+    <a class="button button-secondary" href="{{ url_for('reports.export_csv', desde=date_from, hasta=date_to) }}">↓ Exportar CSV</a>
+</div>
+
+<section class="filter-panel report-filter">
+    <form class="filter-form" method="get">
+        <div class="field"><label for="desde">Desde</label><input id="desde" name="desde" type="date" value="{{ date_from }}"></div>
+        <div class="field"><label for="hasta">Hasta</label><input id="hasta" name="hasta" type="date" value="{{ date_to }}"></div>
+        <button class="button button-primary" type="submit">Aplicar período</button>
+        <a class="button button-ghost" href="{{ url_for('reports.index') }}">Últimos 30 días</a>
+    </form>
+    {% if filter_error %}<p class="filter-error">{{ filter_error }}</p>{% endif %}
+</section>
+
+<section class="metric-grid">
+    <article class="metric-card metric-accent"><div><span>Ingresos</span><strong>{{ format_money(kpis.ingresos) }}</strong><small>Ventas completadas</small></div></article>
+    <article class="metric-card"><div><span>Ventas</span><strong>{{ kpis.ventas }}</strong><small>Operaciones del período</small></div></article>
+    <article class="metric-card"><div><span>Ticket promedio</span><strong>{{ format_money(kpis.ticket_promedio) }}</strong><small>Por operación</small></div></article>
+    <article class="metric-card"><div><span>Unidades vendidas</span><strong>{{ units }}</strong><small>Todos los productos</small></div></article>
+</section>
+
+{% set max_daily = (daily|map(attribute='ingresos')|map('float')|max) or 1 %}
+<section class="panel report-chart-panel">
+    <div class="panel-header"><div><h2>Ingresos por día</h2><p>Evolución de ventas completadas</p></div><span class="chart-total">{{ format_money(kpis.ingresos) }}</span></div>
+    {% if kpis.ingresos > 0 %}
+    <div class="bar-chart" role="img" aria-label="Gráfico de ingresos por día">
+        {% for day in daily %}<div class="bar-column" title="{{ format_date(day.dia) }}: {{ format_money(day.ingresos) }}"><span class="bar-value">{{ format_money(day.ingresos) if day.ingresos > 0 else '' }}</span><div class="bar" style="height: {{ ((day.ingresos|float / max_daily|float) * 100)|round(1) }}%"></div><small>{{ format_date(day.dia) }}</small></div>{% endfor %}
+    </div>
+    {% else %}<div class="empty-state compact-empty"><strong>No hay ventas en este período</strong><p>Selecciona otras fechas para consultar información.</p></div>{% endif %}
+</section>
+
+<div class="reports-grid">
+    <section class="panel">
+        <div class="panel-header"><div><h2>Productos más vendidos</h2><p>Top 10 por unidades</p></div></div>
+        <div class="table-wrap"><table><thead><tr><th>#</th><th>Producto</th><th>Unidades</th><th>Ingresos sin IVA</th></tr></thead><tbody>{% for product in top_products %}<tr><td><span class="rank rank-small">{{ loop.index }}</span></td><td><strong>{{ product.nombre }}</strong><small class="table-subtext">{{ product.marca }}</small></td><td>{{ product.unidades }}</td><td><strong>{{ format_money(product.ingresos) }}</strong></td></tr>{% else %}<tr><td colspan="4" class="empty-cell">Sin datos en el período</td></tr>{% endfor %}</tbody></table></div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header"><div><h2>Ventas por categoría</h2><p>Participación por ingresos</p></div></div>
+        <div class="horizontal-bars">{% for row in by_category %}{% set percent = ((row.ingresos|float / kpis.ingresos|float) * 100) if kpis.ingresos else 0 %}<div class="horizontal-row"><div><strong>{{ row.categoria }}</strong><span>{{ format_money(row.ingresos) }}</span></div><div class="horizontal-track"><i style="width: {{ percent|round(1) }}%"></i></div><small>{{ percent|round(1) }}% · {{ row.unidades }} unidades</small></div>{% else %}<div class="empty-state compact-empty"><strong>Sin datos</strong></div>{% endfor %}</div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header"><div><h2>Desempeño por vendedor</h2><p>Ventas e ingresos</p></div></div>
+        <div class="table-wrap"><table><thead><tr><th>Vendedor</th><th>Ventas</th><th>Ingresos</th></tr></thead><tbody>{% for row in by_seller %}<tr><td><strong>{{ row.vendedor }}</strong></td><td>{{ row.ventas }}</td><td><strong>{{ format_money(row.ingresos) }}</strong></td></tr>{% else %}<tr><td colspan="3" class="empty-cell">Sin datos en el período</td></tr>{% endfor %}</tbody></table></div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header"><div><h2>Métodos de pago</h2><p>Distribución de cobros</p></div></div>
+        <div class="simple-list report-simple-list">{% for row in by_payment %}<div class="simple-row"><div><strong>{{ payment_methods.get(row.metodo, row.metodo) }}</strong><small>{{ row.operaciones }} operación(es)</small></div><strong>{{ format_money(row.ingresos) }}</strong></div>{% else %}<div class="empty-state compact-empty"><strong>Sin pagos en el período</strong></div>{% endfor %}</div>
+    </section>
+</div>
+{% endblock %}

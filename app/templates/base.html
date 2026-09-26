@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="description" content="Sistema POS de Bear's Scourge para electrodomésticos.">
+    <title>{{ titulo }} · {{ app_name }}</title>
+    <link rel="icon" href="{{ url_for('static', filename='img/logo-mark.svg') }}" type="image/svg+xml">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body class="{% if g.user and g.user['rol'] == 'vendedor' %}app-shell{% else %}public-shell{% endif %}">
+<a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+{% if g.user and g.user['rol'] == 'vendedor' %}
+    <aside class="sidebar" id="sidebar" aria-label="Navegación principal">
+        <a class="brand" href="{{ url_for('main.dashboard') }}" aria-label="Bear's Scourge">
+            <span class="brand-mark">BS</span>
+            <span class="brand-copy"><strong>Bear's Scourge</strong><small>Sistema POS</small></span>
+        </a>
+        <nav class="side-nav">
+            <p class="nav-label">Operación</p>
+            <a href="{{ url_for('main.dashboard') }}" class="nav-link {{ 'active' if request.endpoint == 'main.dashboard' }}"><span class="nav-icon" aria-hidden="true">⌂</span> Panel</a>
+            <a href="{{ url_for('sales.create') }}" class="nav-link {{ 'active' if request.endpoint in ('sales.create', 'sales.detail') }}"><span class="nav-icon" aria-hidden="true">＋</span> Nueva venta</a>
+            <a href="{{ url_for('sales.index') }}" class="nav-link {{ 'active' if request.endpoint == 'sales.index' }}"><span class="nav-icon" aria-hidden="true">≡</span> Ventas</a>
+            <a href="{{ url_for('admin.inventory') }}" class="nav-link {{ 'active' if request.endpoint in ('admin.inventory', 'admin.inventory_adjust') }}"><span class="nav-icon" aria-hidden="true">▦</span> Inventario</a>
+            <p class="nav-label">Gestión</p>
+            <a href="{{ url_for('admin.products') }}" class="nav-link {{ 'active' if request.endpoint in ('admin.products', 'admin.product_create', 'admin.product_edit') }}"><span class="nav-icon" aria-hidden="true">◇</span> Productos</a>
+            <a href="{{ url_for('admin.catalogs') }}" class="nav-link {{ 'active' if request.endpoint == 'admin.catalogs' }}"><span class="nav-icon" aria-hidden="true">⌘</span> Categorías y marcas</a>
+            <a href="{{ url_for('admin.users') }}" class="nav-link {{ 'active' if request.endpoint in ('admin.users', 'admin.user_create', 'admin.user_edit') }}"><span class="nav-icon" aria-hidden="true">♙</span> Usuarios</a>
+            <a href="{{ url_for('reports.index') }}" class="nav-link {{ 'active' if request.endpoint == 'reports.index' }}"><span class="nav-icon" aria-hidden="true">◫</span> Reportes</a>
+        </nav>
+        <div class="sidebar-footer"><span class="status-dot"></span> PostgreSQL conectado</div>
+    </aside>
+
+    <div class="page-shell">
+        <header class="topbar">
+            <button class="icon-button menu-toggle" type="button" data-sidebar-toggle aria-label="Abrir menú" aria-controls="sidebar" aria-expanded="false">☰</button>
+            <div class="topbar-title"><span class="eyebrow">Punto de venta</span><strong>{{ titulo }}</strong></div>
+            <div class="topbar-actions">
+                <a class="icon-button" href="{{ url_for('main.home') }}" target="_blank" rel="noopener" title="Ver tienda pública">↗</a>
+                <details class="user-menu">
+                    <summary>
+                        <span class="avatar">{{ (g.user['nombre'][0] ~ g.user['apellido'][0])|upper }}</span>
+                        <span class="user-summary-copy"><strong>{{ full_name(g.user) }}</strong><small>Vendedor</small></span>
+                    </summary>
+                    <div class="user-dropdown">
+                        <div class="dropdown-user"><strong>{{ full_name(g.user) }}</strong><small>{{ g.user['correo'] }}</small></div>
+                        <form method="post" action="{{ url_for('auth.logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="dropdown-action" type="submit">Cerrar sesión</button></form>
+                    </div>
+                </details>
+            </div>
+        </header>
+        <main class="content" id="contenido">
+{% else %}
+    <header class="public-header">
+        <div class="public-container nav-wrap">
+            <a class="brand public-brand" href="{{ url_for('main.home') }}"><span class="brand-mark">BS</span><span class="brand-copy"><strong>Bear's Scourge</strong><small>Electrodomésticos</small></span></a>
+            <button class="icon-button mobile-public-toggle" type="button" data-public-toggle aria-label="Abrir menú" aria-expanded="false">☰</button>
+            <nav class="public-nav" id="public-nav">
+                <a href="{{ url_for('main.home') }}#catalogo">Catálogo</a>
+                <a href="{{ url_for('auth.login') }}">Ingresar</a>
+            </nav>
+        </div>
+    </header>
+    <main id="contenido">
+{% endif %}
+    {% include '_flash.html' %}
+    {% block content %}{% endblock %}
+
+{% if g.user and g.user['rol'] == 'vendedor' %}
+        </main>
+    </div>
+{% else %}
+    </main>
+    <footer class="public-footer">
+        <div class="public-container footer-grid">
+            <div><a class="brand public-brand" href="{{ url_for('main.home') }}"><span class="brand-mark">BS</span><span class="brand-copy"><strong>Bear's Scourge</strong><small>Electrodomésticos</small></span></a><p>Tecnología que hace más cómodo tu hogar.</p></div>
+            <div><strong>Atención</strong><a href="{{ url_for('auth.login') }}">Iniciar sesión</a></div>
+            <div><strong>Proyecto académico</strong><span>POS · PostgreSQL · Flask</span><span>Universidad Privada Domingo Savio</span></div>
+        </div>
+        <div class="public-container footer-bottom">© {{ current_year }} Bear's Scourge · Cochabamba, Bolivia</div>
+    </footer>
+{% endif %}
+
+<div class="sidebar-backdrop" data-sidebar-toggle></div>
+<script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
